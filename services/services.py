@@ -1,35 +1,10 @@
-"""
+from random import choice
+import requests
 
-import random
+from aiogram.types import URLInputFile
 
-from lexicon.lexicon_ru import LEXICON_RU
+from lexicon.lexicon_ru import SERVICES
 
-
-# Функция, возвращающая случайный выбор бота в игре
-def get_bot_choice() -> str:
-    return random.choice(['rock', 'paper', 'scissors'])
-
-
-# Функция, возвращающая ключ из словаря, по которому
-# хранится значение, передаваемое как аргумент - выбор пользователя
-def _normalize_user_answer(user_answer: str) -> str:
-    for key in LEXICON_RU:
-        if LEXICON_RU[key] == user_answer:
-            break
-    return key
-
-
-# Функция, определяющая победителя
-def get_winner(user_choice: str, bot_choice: str) -> str:
-    user_choice = _normalize_user_answer(user_choice)
-    rules = {'rock': 'scissors',
-             'scissors': 'paper',
-             'paper': 'rock'}
-    if user_choice == bot_choice:
-        return 'nobody_won'
-    elif rules[user_choice] == bot_choice:
-        return 'user_won'
-    return 'bot_won'
 
 # Прогноз погоды по API
 def get_weather(city: str) -> str:
@@ -92,4 +67,28 @@ def get_weather(city: str) -> str:
 
     return weather_report
 
-"""
+
+HTTP_CODES = [100, 101, 102, 103,
+              201, 202, 203, 204, 205, 206, 207, 208, 214, 226,
+              300, 301, 302, 303, 304, 305, 307, 308,
+              400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 420, 421, 422, 423, 425, 426, 428, 429, 431, 444, 450, 451, 497, 498, 499,
+              500, 501, 502, 503, 504, 506, 507, 508, 509, 510, 511, 521, 522, 523, 525, 530, 599]
+
+
+# Получить случайный http код
+def get_random_http() -> int:
+    return choice(HTTP_CODES)
+
+
+# Проверить код http на существование в HTTP_CODES
+def check_http(code: int) -> int:
+    return True if code in HTTP_CODES else False
+
+
+# Получить изображение кота, в котором зашифрован код HTTP по API
+def get_http_in_cat(code: int):
+    if check_http(code):
+        return URLInputFile(f"https://http.cat/{code}")
+    else:
+        return SERVICES["404"]
+
