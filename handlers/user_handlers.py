@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from keyboards.keyboards import language_kb
-from services.services import get_weather, get_random_http, check_http,  get_http_in_cat
+from services.services import get_weather, get_random_http, check_http,  get_http_in_cat, get_random_number
 
 from lexicon.lexicon_ru import COMMANDS, HELP, BASE
 
@@ -87,3 +87,25 @@ async def process_http_in_cat_command(message: Message):
     else:
         await message.answer(text=BASE["invalid"])
 
+
+# Этот хэндлер срабатывает на команду /random
+@router.message(Command(commands='random'))
+async def process_random_command(message: Message):
+    args = message.text.split()
+    if len(args) == 1:
+        answer = get_random_number()
+
+    elif len(args) > 3:
+        answer = BASE["invalid"]
+
+    else:
+        try:
+            if len(args) == 2:
+                answer = get_random_number(0, int(args[1]))
+            else:
+                answer = get_random_number(int(args[1]), int(args[2]))
+
+        except TypeError:
+            answer = BASE["invalid"]
+
+    await message.answer(text=str(answer))

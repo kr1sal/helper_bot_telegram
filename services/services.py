@@ -1,4 +1,4 @@
-from random import choice
+from random import choice, randint
 import requests
 
 from aiogram.types import URLInputFile
@@ -92,3 +92,7 @@ def get_http_in_cat(code: int):
     else:
         return SERVICES["404"]
 
+
+# Получить рандомное число
+def get_random_number(start: int = 0, end: int = 100) -> int:
+    return randint(start, end)
