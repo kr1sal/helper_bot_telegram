@@ -2,7 +2,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from keyboards.keyboards import language_kb
-from services.services import get_weather, get_random_http, check_http,  get_http_in_cat, get_random_number
+from services.services import get_weather, get_random_http, check_http,  get_http_in_cat, get_random_number, get_qr_code, get_type_of_urlinputfile
 
 from lexicon.lexicon_ru import COMMANDS, HELP, BASE
 
@@ -59,9 +59,9 @@ async def process_weather_command(message: Message):
     if len(args) == 1:
         answer = get_weather("12323")
     elif len(args) == 2:
-        answer = get_weather(message[1])
+        answer = get_weather(args[1])
     else:
-        answer = BASE["invalid"]
+        answer = BASE["wrong_args"]
 
     await message.answer(text=answer)
 
@@ -85,7 +85,7 @@ async def process_http_in_cat_command(message: Message):
             await message.answer(text=BASE["invalid"])
     # Иначе выводит инвалида
     else:
-        await message.answer(text=BASE["invalid"])
+        await message.answer(text=BASE["wrong_args"])
 
 
 # Этот хэндлер срабатывает на команду /random
@@ -96,7 +96,7 @@ async def process_random_command(message: Message):
         answer = get_random_number()
 
     elif len(args) > 3:
-        answer = BASE["invalid"]
+        answer = BASE["wrong_args"]
 
     else:
         try:
@@ -109,3 +109,40 @@ async def process_random_command(message: Message):
             answer = BASE["invalid"]
 
     await message.answer(text=str(answer))
+
+
+# Этот хэндлер срабатывает на команду /qr_code
+@router.message(Command(commands='qr_code'))
+async def process_random_command(message: Message):
+    args = message.text.split()
+
+    if len(args) == 1:
+        await message.answer(text=HELP["qr_code"])
+
+    elif len(args) == 2:
+        answer = get_qr_code(args[1])
+        if type(answer) is get_type_of_urlinputfile():
+            await message.answer_photo(photo=answer)
+        else:
+            await message.answer(text=answer)
+
+    elif len(args) == 5:
+        await message.answer(text=BASE["tech_work"])
+
+        """
+        try:
+            if args[4].lower() == "true":
+                answer = get_qr_code(url=args[1], size=int(args[2]), file_format=args[3], transparent=True)
+            else:
+                answer = get_qr_code(args[1], int(args[2]), args[3])
+
+            if type(answer) is get_type_of_urlinputfile():
+                await message.answer_photo(photo=answer)
+            else:
+                await message.answer(text=answer)
+        except TypeError:
+            await message.answer(text=BASE["invalid"])
+        """
+
+    else:
+        await message.answer(text=BASE["wrong_args"])

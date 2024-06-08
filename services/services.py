@@ -1,4 +1,6 @@
 from random import choice, randint
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 import requests
 
 from aiogram.types import URLInputFile
@@ -95,4 +97,31 @@ def get_http_in_cat(code: int):
 
 # Получить рандомное число
 def get_random_number(start: int = 0, end: int = 100) -> int:
+    if start > end:
+        start, end = end, start
     return randint(start, end)
+
+
+# Получить тип данных aiogram.types.input_file.URLInputFile
+def get_type_of_urlinputfile():
+    return type(URLInputFile("google.com"))
+
+
+# Получить qr-код по API
+def get_qr_code(url: str, size: int = None, file_format: str = "png", transparent: bool = False):
+    try:
+        urlopen(url)
+    except Exception:
+        return SERVICES["wrong_url"]
+
+    file_format = file_format.lower()
+    if file_format not in ("png", "svg", ".png", ".svg"):
+        return f"Format {file_format} not supported"
+
+    transparent = "_transparent" if transparent else ""
+    size = f"_{size}" if size else ""
+    file_format = '.' + file_format if file_format[0] != '.' else file_format
+
+    print(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
+
+    return URLInputFile(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
