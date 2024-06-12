@@ -1,9 +1,11 @@
-# helper_bot_telegram
-Personal telegram bot on Python
+# Krisal Bot
+Personal Universal telegram bot on Python
 
 Python 3.10
 
-Packages:
-aiogram 3.7
-requests
-environs
+Need bot token and api keys from:
+https://openweathermap.org/
+
+Just copy .env_example ==> .env and insert keys!
+
+Also, you need install packages from requirements.txt
