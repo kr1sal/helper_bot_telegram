@@ -85,6 +85,6 @@ def get_qr_code(url: str, size: int = None, file_format: str = "png", transparen
     size = f"_{size}" if size else ""
     file_format = '.' + file_format if file_format[0] != '.' else file_format
 
-    print(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
+    # print(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
 
     return URLInputFile(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
