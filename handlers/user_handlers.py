@@ -1,9 +1,9 @@
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
+
 from keyboards.keyboards import language_kb
 from services.services import get_weather, get_random_http, check_http,  get_http_in_cat, get_random_number, get_qr_code, get_type_of_urlinputfile
-
 from lexicon.lexicon_ru import COMMANDS, HELP, BASE
 
 router = Router()
@@ -57,7 +57,7 @@ async def process_buttons_press(callback: CallbackQuery):
 async def process_weather_command(message: Message):
     args = message.text.split()
     if len(args) == 1:
-        answer = get_weather("12323")
+        answer = get_weather("Санкт-Петербург")
     elif len(args) == 2:
         answer = get_weather(args[1])
     else:

@@ -25,5 +25,12 @@ HELP: dict[str, str] = {
 
 SERVICES: dict[str, str] = {
     "404": "Ошибка 404! Код HTTP не найден!",
-    "wrong_url": "Указан неверный url. Перепроверьте ссылку!"
+    "wrong_url": "Указан неверный url. Перепроверьте ссылку!",
+    "weather": {
+        "main": "Погода в <b>{city}</b> сейчас такая:",
+        "description": "За окном: <b>{description}</b>",
+        "temperature": "Температура: <b>{temperature}°C</b>",
+        "wind_speed": "Скорость ветра: <b>{wind_speed}</b> м/с"
+    },
+    "city_not_found": "Невозможно определить погоду для <b>{city}</b>"
 }

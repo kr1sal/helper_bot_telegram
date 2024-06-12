@@ -3,16 +3,13 @@ from environs import Env
 
 
 @dataclass
-class TgBot:
-    token: str  # Токен для доступа к телеграм-боту
-
-
-@dataclass
 class Config:
-    tg_bot: TgBot
+    bot_token: str
+    weather_api_key: str
 
 
-def load_config(path: str = None) -> Config:
-    env = Env()
-    env.read_env(path)
-    return Config(tg_bot=TgBot(token=env('BOT_TOKEN')))
+# Инициализируем среду переменных и загружаем конфиг в переменную config
+env = Env()
+env.read_env()
+config: Config = Config(bot_token=env("BOT_TOKEN"),
+                        weather_api_key=env("WEATHER_API_KEY"))
