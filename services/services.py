@@ -4,16 +4,16 @@ import requests
 from aiogram.types import URLInputFile
 
 from config_data.config import config
-from lexicon.lexicon_ru import SERVICES
 
 
 # Прогноз погоды по API
-def get_weather(city: str, lang: str = "ru") -> str:
+def get_weather(city: str, lang: str = "EN"):
     # Получаем данные по openweathermap.org API
     weather_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&lang={lang}&units=metric&appid={config.weather_api_key}"
     weather_response = requests.get(weather_url)
     weather_data = weather_response.json()
 
+    weather_report = False
     # Обрабатываем запрос
     if weather_response.status_code == 200:
         # Обработка полученной информации
@@ -21,14 +21,7 @@ def get_weather(city: str, lang: str = "ru") -> str:
         temperature = weather_data['main']['temp']
         wind_speed = weather_data['wind']['speed']
 
-        weather_report = "\n".join((
-            SERVICES["weather"]["main"].format(city=city),
-            SERVICES["weather"]["description"].format(description=description),
-            SERVICES["weather"]["temperature"].format(temperature=temperature),
-            SERVICES["weather"]["wind_speed"].format(wind_speed=wind_speed),
-        ))
-    else:
-        weather_report = SERVICES["city_not_found"].format(city=city)
+        weather_report = (city, description, temperature, wind_speed)
 
     return weather_report
 
@@ -52,10 +45,7 @@ def check_http(code: int) -> int:
 
 # Получить изображение кота, в котором зашифрован код HTTP по API
 def get_http_in_cat(code: int):
-    if check_http(code):
-        return URLInputFile(f"https://http.cat/{code}")
-    else:
-        return SERVICES["404"]
+    return URLInputFile(f"https://http.cat/{code}") if check_http(code) else False
 
 
 # Получить рандомное число
@@ -70,16 +60,16 @@ def get_type_of_urlinputfile():
     return type(URLInputFile("google.com"))
 
 
-# Получить qr-код по API
+# Получить qr-код по API (0 - неизвестная ошибка, 1 - не открыть ресурс по url, 2 - формат файла не поддерживается)
 def get_qr_code(url: str, size: int = None, file_format: str = "png", transparent: bool = False):
     try:
         urlopen(url)
     except Exception:
-        return SERVICES["wrong_url"]
+        return 1
 
     file_format = file_format.lower()
     if file_format not in ("png", "svg", ".png", ".svg"):
-        return f"Format {file_format} not supported"
+        return 2
 
     transparent = "_transparent" if transparent else ""
     size = f"_{size}" if size else ""
