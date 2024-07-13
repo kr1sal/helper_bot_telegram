@@ -2,6 +2,8 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 # from lexicon.lexicon_ru import KEYBOARDS
 
+""" LANGUAGES """
+
 # Кнопки выбора языка
 # Russian
 ru_button = InlineKeyboardButton(
@@ -20,9 +22,10 @@ language_kb = InlineKeyboardMarkup(
                      [en_button]]
 )
 
+""" BIRTHDAYS"""
+
 
 """
-
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 from lexicon.lexicon_ru import KEYBOARDS

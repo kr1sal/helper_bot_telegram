@@ -201,6 +201,14 @@ async def process_random_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
+# Этот хэндлер срабатывает на команду /birthdays
+@router.message(Command(commands='birthdays'))
+async def process_random_command(message: Message):
+    lang = db.get_language(message.from_user.id)
+
+    await message.answer(text=LEXICON[lang]["BASE"]["tech_work"])
+
+
 """ CALLBACK QUERY """
 
 
