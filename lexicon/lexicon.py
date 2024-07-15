@@ -1,6 +1,8 @@
 LEXICON: dict = {
     # Русский
     "RU": {
+        "name": "Русский",
+
         "BASE": {
             "other_answer": "Увы, это сообщение мне непонятно...",
             "not_found": "Команда не найдена!",
@@ -60,6 +62,8 @@ LEXICON: dict = {
 
     # English, just English
     "EN": {
+        "name": "English",
+
         "BASE": {
             "other_answer": "Unfortunately, this message is not clear to me...",
             "not_found": "Command not found!",

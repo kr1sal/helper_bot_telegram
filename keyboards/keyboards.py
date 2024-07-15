@@ -1,23 +1,20 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from lexicon.lexicon import LEXICON
+
 """ LANGUAGES """
 
-# Кнопки выбора языка
-# Russian
-ru_button = InlineKeyboardButton(
-    text='Русский',
-    callback_data='ru_button_pressed'
-)
-# English
-en_button = InlineKeyboardButton(
-    text='English',
-    callback_data='en_button_pressed'
-)
+# Получаем все языки из lexicon.py и создаём кнопки с ними
+language_buttons = []
+for lang in LEXICON.keys():
+    language_buttons.append(InlineKeyboardButton(
+        text=LEXICON[lang]["name"],
+        callback_data=f"{lang}_button_pressed"
+    ))
 
 # Создаём клавиатуру с выбором языка
 language_kb = InlineKeyboardMarkup(
-    inline_keyboard=[[ru_button],
-                     [en_button]]
+    inline_keyboard=[language_buttons]
 )
 
 """ BIRTHDAYS"""

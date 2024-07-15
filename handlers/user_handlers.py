@@ -4,7 +4,7 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 
-from keyboards.keyboards import language_kb, birthdays_kb
+from keyboards.keyboards import language_buttons, language_kb, birthdays_kb
 from services.services import get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number, get_qr_code, \
     get_type_of_urlinputfile, multi_split
 from services.db_services import Database
@@ -317,25 +317,13 @@ async def process_random_command(message: Message):
 """ CALLBACK QUERY """
 
 
-# хендлер отвечает за CallbackQuery en_button_pressed
-@router.callback_query(F.data.in_(['en_button_pressed']))
+# хендлер отвечает за CallbackQuery {language}_button_pressed
+@router.callback_query(F.data.in_([lang_button.callback_data for lang_button in language_buttons]))
 async def process_buttons_press(callback: CallbackQuery):
-    lang = "EN"
+    # Получаем язык, на который хотим поменять текущий
+    lang = callback.data.title().upper()[:2]
 
-    # Меняем язык на английский
-    lang_old = db.change_language(callback.from_user.id, lang)
-
-    answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old, language=lang)
-
-    await callback.answer(text=answer)
-
-
-# хендлер отвечает за CallbackQuery ru_button_pressed
-@router.callback_query(F.data.in_(['ru_button_pressed']))
-async def process_buttons_press(callback: CallbackQuery):
-    lang = "RU"
-
-    # Меняем язык на русский
+    # Меняем язык на lang и получаем прошлый, на котором разговаривал бот
     lang_old = db.change_language(callback.from_user.id, lang)
 
     answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old, language=lang)
