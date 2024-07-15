@@ -1,9 +1,44 @@
 from random import choice, randint
+import re
+from typing import List
 from urllib.request import urlopen
 import requests
 from aiogram.types import URLInputFile
 
 from config_data.config import config
+
+
+""" BASE FUNCTIONS """
+
+
+# Преобразовать строку с командой в аргументы
+def get_args(string: str) -> List[str]:
+    args: list[str] = []
+
+    word = ""
+    merge = False
+    for c in string:
+        if c != "\'" and c != "\"":
+            if c != " " or merge:
+                word += c
+            elif word and not merge:
+                args.append(word)
+                word = ""
+        else:
+            merge = not merge
+
+    if word:
+        args.append(word)
+
+    return args
+
+
+# Выводит список из разделённых строк с помощью множества разделителей
+def multi_split(separators: List[str], string: str) -> List[str]:
+    return re.split(f"[{''.join(separators)}]", string)
+
+
+""" COMMANDS FUNCTIONS """
 
 
 # Прогноз погоды по API
@@ -13,7 +48,7 @@ def get_weather(city: str, lang: str = "EN"):
     weather_response = requests.get(weather_url)
     weather_data = weather_response.json()
 
-    weather_report = False
+    weather_report = ()
     # Обрабатываем запрос
     if weather_response.status_code == 200:
         # Обработка полученной информации

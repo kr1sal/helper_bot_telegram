@@ -1,16 +1,18 @@
+import datetime as dt
+
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 
-from keyboards.keyboards import language_kb
-from services.services import get_weather, get_random_http, check_http,  get_http_in_cat, get_random_number, get_qr_code, get_type_of_urlinputfile
+from keyboards.keyboards import language_kb, birthdays_kb
+from services.services import get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number, get_qr_code, \
+    get_type_of_urlinputfile, multi_split
 from services.db_services import Database
 from lexicon.lexicon import LEXICON
 
 # Создаём роутер и базу данных
 router = Router()
 db = Database()
-
 
 """ SERVICE HANDLERS """
 
@@ -85,13 +87,13 @@ async def process_weather_command(message: Message):
             answer = get_weather(args[1], lang)
             if answer:
                 answer = "\n".join((
-                    LEXICON[lang]["SERVICES"]["weather"]["main"].format(city=answer[0]),
-                    LEXICON[lang]["SERVICES"]["weather"]["description"].format(description=answer[1]),
-                    LEXICON[lang]["SERVICES"]["weather"]["temperature"].format(temperature=answer[2]),
-                    LEXICON[lang]["SERVICES"]["weather"]["wind_speed"].format(wind_speed=answer[3])
+                    LEXICON[lang]["COMMANDS"]["weather"]["main"].format(city=answer[0]),
+                    LEXICON[lang]["COMMANDS"]["weather"]["description"].format(description=answer[1]),
+                    LEXICON[lang]["COMMANDS"]["weather"]["temperature"].format(temperature=answer[2]),
+                    LEXICON[lang]["COMMANDS"]["weather"]["wind_speed"].format(wind_speed=answer[3])
                 ))
             else:
-                answer = LEXICON[lang]["SERVICES"]["city_not_found"]
+                answer = LEXICON[lang]["COMMANDS"]["city_not_found"]
 
             await message.answer(text=answer)
 
@@ -116,7 +118,7 @@ async def process_http_in_cat_command(message: Message):
                 if check_http(int(args[1])):
                     await message.answer_photo(photo=get_http_in_cat(int(args[1])))
                 else:
-                    await message.answer(text=LEXICON[lang]["SERVICES"]["404"])
+                    await message.answer(text=LEXICON[lang]["COMMANDS"]["http_404"])
 
             except TypeError:
                 await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
@@ -173,9 +175,9 @@ async def process_random_command(message: Message):
             if type(answer) is get_type_of_urlinputfile():
                 await message.answer_photo(photo=answer)
             elif answer == 1:
-                await message.answer(text=LEXICON[lang]["SERVICES"]["wrong_url"])
+                await message.answer(text=LEXICON[lang]["COMMANDS"]["wrong_url"])
             elif answer == 2:
-                await message.answer(text=LEXICON[lang]["SERVICES"]["wrong_file_format"])
+                await message.answer(text=LEXICON[lang]["COMMANDS"]["wrong_file_format"])
             else:
                 await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
 
@@ -206,7 +208,110 @@ async def process_random_command(message: Message):
 async def process_random_command(message: Message):
     lang = db.get_language(message.from_user.id)
 
-    await message.answer(text=LEXICON[lang]["BASE"]["tech_work"])
+    # Если сообщение слишком длинное, то отвечаем исключением
+    if len(message.text) >= 100:
+        await message.answer(text=LEXICON[lang]["BASE"]["long_message"])
+        return
+
+    # Получаем аргументы и список дней рождений пользователя
+    args = get_args(message.text)
+    birthdays = db.get_user_birthdays(message.from_user.id)
+
+    # Если передана только команда, то возвращаем меню birthdays
+    if len(args) == 1:
+        if birthdays:
+            answer = []
+            counter = 1
+            for birthday_id, user_id, name, date, years in birthdays:
+                answer.append(LEXICON[lang]["COMMANDS"]["birthdays"]["birthday"].format(id=counter, name=name, date=date, years=years))
+                counter += 1
+
+            await message.answer(text="\n".join(answer),
+                                 reply_markup=birthdays_kb)
+
+        else:
+            await message.answer(text=LEXICON[lang]["COMMANDS"]["birthdays"]["404"],
+                                 reply_markup=birthdays_kb)
+
+        return
+
+    # Иначе работаем в режиме командной строки
+    match args[1].lower():
+        # Если первый аргумент list, то выводим список дней рождений
+        case "list":
+            # Если дни рождения существуют в базе данных, то форматируем и выводим
+            if birthdays:
+                answer = []
+                counter = 1
+                for birthday_id, user_id, name, date, years in birthdays:
+                    delimiter = " " * (8 - len(str(counter))*2)
+                    answer.append(LEXICON[lang]["COMMANDS"]["birthdays"]["birthday"].format(id=counter, name=name, date=date, years=years, delimiter=delimiter))
+                    counter += 1
+
+                await message.answer(text="\n".join(answer))
+
+            # Иначе выводим 404
+            else:
+                await message.answer(text=LEXICON[lang]["COMMANDS"]["birthdays"]["404"])
+
+        # Если первый аргумент add, то добавляем новый день рождения
+        case "add":
+            # Если достигнуто максимум дней рождений в базе данных, то отвечаем исключением
+            if len(birthdays) >= 100:
+                await message.answer(text="many_birthdays")
+                return
+
+            if len(args) == 5:
+                name = args[2]
+                year, month, day = map(int, multi_split(["-", "."], args[3]))
+                date = dt.date(year, month, day)
+                years = int(args[4])
+                db.add_birthday(message.from_user.id, name, date, years)
+
+            else:
+                await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+
+        # Если первый аргумент change, то изменяем данные о дне рождения
+        case "change":
+            if len(args) == 5:
+                index = int(args[2])
+
+                match args[3].lower():
+                    case "name":
+                        name = args[4]
+                        db.change_name_birthday(birthdays[index-1][0], name)
+
+                    case "date":
+                        year, month, day = map(int, multi_split(["-", "."], args[3]))
+                        date = dt.date(year, month, day)
+                        db.change_date_birthday(birthdays[index-1][0], date)
+
+                    case "years":
+                        years = int(args[4])
+                        db.change_years_birthday(birthdays[index-1][0], years)
+
+                    case _:
+                        await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
+
+            else:
+                await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+
+        # Если первый аргумент delete, то удаляем день рождения
+        case "delete":
+            if len(args) >= 3:
+                index = int(args[2])
+
+                if index in range(1, len(birthdays)+1):
+                    db.delete_birthday(birthdays[index-1][0])
+                else:
+                    await message.answer(text=LEXICON[lang]["COMMANDS"]["birthdays"]["out_of_range"])
+
+            else:
+                await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+
+        # Иначе выводим инвалид
+        case _:
+            await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
 
 
 """ CALLBACK QUERY """
@@ -220,7 +325,7 @@ async def process_buttons_press(callback: CallbackQuery):
     # Меняем язык на английский
     lang_old = db.change_language(callback.from_user.id, lang)
 
-    answer = LEXICON[lang]["SERVICES"]["change_language"].format(language_old=lang_old, language=lang)
+    answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old, language=lang)
 
     await callback.answer(text=answer)
 
@@ -233,7 +338,7 @@ async def process_buttons_press(callback: CallbackQuery):
     # Меняем язык на русский
     lang_old = db.change_language(callback.from_user.id, lang)
 
-    answer = LEXICON[lang]["SERVICES"]["change_language"].format(language_old=lang_old, language=lang)
+    answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old, language=lang)
 
     await callback.answer(text=answer)
 
