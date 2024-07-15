@@ -90,11 +90,6 @@ def get_random_number(start: int = 0, end: int = 100) -> int:
     return randint(start, end)
 
 
-# Получить тип данных aiogram.types.input_file.URLInputFile
-def get_type_of_urlinputfile():
-    return type(URLInputFile("google.com"))
-
-
 # Получить qr-код по API (0 - неизвестная ошибка, 1 - не открыть ресурс по url, 2 - формат файла не поддерживается)
 def get_qr_code(url: str, size: int = None, file_format: str = "png", transparent: bool = False):
     try:

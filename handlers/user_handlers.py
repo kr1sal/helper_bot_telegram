@@ -2,11 +2,11 @@ import datetime as dt
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, URLInputFile
 
 from keyboards.keyboards import language_buttons, language_kb, birthdays_kb
-from services.services import get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number, get_qr_code, \
-    get_type_of_urlinputfile, multi_split
+from services.services import (get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number,
+                               get_qr_code, multi_split)
 from services.db_services import Database
 from lexicon.lexicon import LEXICON
 
@@ -21,9 +21,9 @@ db = Database()
 @router.message(CommandStart())
 async def process_start_command(message: Message):
     # Добавляем пользователя в базу данных
-    db.add_user(message.from_user.id)
+    await db.add_user(message.from_user.id)
     # Получаем язык коммуникации, по умолчанию английский EN
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
     # Достаём ответ из словаря лексикона
     answer = LEXICON[lang]["COMMANDS"]["start"]
 
@@ -33,7 +33,7 @@ async def process_start_command(message: Message):
 # Этот хэндлер срабатывает на команду /help
 @router.message(Command(commands='help'))
 async def process_help_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     answer = LEXICON[lang]["HELP"].values()
 
@@ -43,7 +43,7 @@ async def process_help_command(message: Message):
 # Этот хэндлер срабатывает на команду /man
 @router.message(Command(commands='man'))
 async def process_man_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     # Получаем аргументы и считываем команды
     args = message.text.split()
@@ -63,18 +63,43 @@ async def process_man_command(message: Message):
 # Этот хэндлер срабатывает на команду /language
 @router.message(Command(commands='language'))
 async def process_language_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
-    answer = LEXICON[lang]["COMMANDS"]["language"]
+    args = message.text.split()
+    match len(args):
+        case 1:
+            await message.answer(text=LEXICON[lang]["COMMANDS"]["language"],
+                                 reply_markup=language_kb)
 
-    await message.answer(text=answer,
-                         reply_markup=language_kb)
+        case 3:
+            if args[1].lower() == "change":
+                languages = []
+                for key in LEXICON.keys():
+                    languages.extend([key, LEXICON[key]["name"].upper()])
+
+                query = args[2].upper()
+                for i in range(0, len(languages), 2):
+                    if query == languages[i] or query == languages[i+1]:
+                        # Меняем язык на запрашиваемый и выводим ответ
+                        lang, lang_old = languages[i], lang
+                        await db.change_language(message.from_user.id, lang)
+                        answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old,
+                                                                                     language=lang)
+                        await message.answer(text=answer)
+                        break
+                else:
+                    await message.answer(text="language not found")
+            else:
+                await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
+
+        case _:
+            await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
 # Этот хэндлер срабатывает на команду /weather
 @router.message(Command(commands='weather'))
 async def process_weather_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     args = message.text.split()
     match len(args):
@@ -104,7 +129,7 @@ async def process_weather_command(message: Message):
 # Этот хэндлер срабатывает на команду /http_in_cat
 @router.message(Command(commands='http_in_cat'))
 async def process_http_in_cat_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     args = message.text.split()
     match len(args):
@@ -131,7 +156,7 @@ async def process_http_in_cat_command(message: Message):
 # Этот хэндлер срабатывает на команду /random
 @router.message(Command(commands='random'))
 async def process_random_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     args = message.text.split()
     match len(args):
@@ -161,7 +186,7 @@ async def process_random_command(message: Message):
 # Этот хэндлер срабатывает на команду /qr_code
 @router.message(Command(commands='qr_code'))
 async def process_random_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     args = message.text.split()
     match len(args):
@@ -172,7 +197,7 @@ async def process_random_command(message: Message):
         # Если есть второй аргумент, считаем его ссылкой и обрабатываем ошибки
         case 2:
             answer = get_qr_code(args[1])
-            if type(answer) is get_type_of_urlinputfile():
+            if type(answer) is URLInputFile:
                 await message.answer_photo(photo=answer)
             elif answer == 1:
                 await message.answer(text=LEXICON[lang]["COMMANDS"]["wrong_url"])
@@ -206,7 +231,7 @@ async def process_random_command(message: Message):
 # Этот хэндлер срабатывает на команду /birthdays
 @router.message(Command(commands='birthdays'))
 async def process_random_command(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     # Если сообщение слишком длинное, то отвечаем исключением
     if len(message.text) >= 100:
@@ -215,7 +240,7 @@ async def process_random_command(message: Message):
 
     # Получаем аргументы и список дней рождений пользователя
     args = get_args(message.text)
-    birthdays = db.get_user_birthdays(message.from_user.id)
+    birthdays = await db.get_user_birthdays(message.from_user.id)
 
     # Если передана только команда, то возвращаем меню birthdays
     if len(args) == 1:
@@ -266,7 +291,7 @@ async def process_random_command(message: Message):
                 year, month, day = map(int, multi_split(["-", "."], args[3]))
                 date = dt.date(year, month, day)
                 years = int(args[4])
-                db.add_birthday(message.from_user.id, name, date, years)
+                await db.add_birthday(message.from_user.id, name, date, years)
 
             else:
                 await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
@@ -279,16 +304,16 @@ async def process_random_command(message: Message):
                 match args[3].lower():
                     case "name":
                         name = args[4]
-                        db.change_name_birthday(birthdays[index-1][0], name)
+                        await db.change_name_birthday(birthdays[index-1][0], name)
 
                     case "date":
                         year, month, day = map(int, multi_split(["-", "."], args[3]))
                         date = dt.date(year, month, day)
-                        db.change_date_birthday(birthdays[index-1][0], date)
+                        await db.change_date_birthday(birthdays[index-1][0], date)
 
                     case "years":
                         years = int(args[4])
-                        db.change_years_birthday(birthdays[index-1][0], years)
+                        await db.change_years_birthday(birthdays[index-1][0], years)
 
                     case _:
                         await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
@@ -302,7 +327,7 @@ async def process_random_command(message: Message):
                 index = int(args[2])
 
                 if index in range(1, len(birthdays)+1):
-                    db.delete_birthday(birthdays[index-1][0])
+                    await db.delete_birthday(birthdays[index-1][0])
                 else:
                     await message.answer(text=LEXICON[lang]["COMMANDS"]["birthdays"]["out_of_range"])
 
@@ -324,7 +349,7 @@ async def process_buttons_press(callback: CallbackQuery):
     lang = callback.data.title().upper()[:2]
 
     # Меняем язык на lang и получаем прошлый, на котором разговаривал бот
-    lang_old = db.change_language(callback.from_user.id, lang)
+    lang_old = await db.change_language(callback.from_user.id, lang)
 
     answer = LEXICON[lang]["COMMANDS"]["change_language"].format(language_old=lang_old, language=lang)
 
@@ -337,7 +362,7 @@ async def process_buttons_press(callback: CallbackQuery):
 # Хэндлер для сообщений, которые не попали в другие хэндлеры
 @router.message()
 async def send_answer(message: Message):
-    lang = db.get_language(message.from_user.id)
+    lang = await db.get_language(message.from_user.id)
 
     answer = LEXICON[lang]["BASE"]["other_answer"]
 
