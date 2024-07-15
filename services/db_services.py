@@ -2,6 +2,9 @@ import sqlite3 as sq
 import datetime as dt
 from typing import List, Any
 
+sq.register_adapter(bool, int)
+sq.register_converter("BOOLEAN", lambda v: bool(int(v)))
+
 
 class Database:
     # Соединяемся с базой данных
@@ -23,7 +26,8 @@ class Database:
             user_id INTEGER,
             name TEXT,
             date DATE,
-            years INTEGER
+            years INTEGER,
+            remind BOOLEAN
             );
         """)
         self.connection.commit()
@@ -69,10 +73,12 @@ class Database:
     """ BIRTHDAYS """
 
     # Добавить день рождение в базу (уникальный name)
-    async def add_birthday(self, user_id: int, name: str, date: dt.date, years: int) -> None:
-        self.cursor.execute("INSERT INTO birthdays(user_id, name, date, years) VALUES(?, ?, ?, ?);",
-                            (user_id, name, date, years))
+    async def add_birthday(self, user_id: int, name: str, date: dt.date, years: int, remind: bool = True) -> int:
+        birthday_id = self.cursor.execute("INSERT INTO birthdays(user_id, name, date, years) VALUES(?, ?, ?, ?, ?)"
+                                          "RETURNING birthday_id;",
+                                          (user_id, name, date, years, remind)).fetchone()[0]
         self.connection.commit()
+        return birthday_id
 
     # Изменить имя дня рождения
     async def change_name_birthday(self, birthday_id: int, name: str) -> None:
@@ -90,6 +96,12 @@ class Database:
     async def change_years_birthday(self, birthday_id: int, years: int) -> None:
         self.cursor.execute("UPDATE birthdays SET years = ? WHERE birthday_id = ?;",
                             (years, birthday_id))
+        self.connection.commit()
+
+    # Изменить значение "Напоминать ли?"
+    async def change_remind_birthday(self, birthday_id: int, remind: bool) -> None:
+        self.cursor.execute("UPDATE birthdays SET remind = ? WHERE birthday_id = ?;",
+                            (remind, birthday_id))
         self.connection.commit()
 
     # Получить день рождение по имени кортежем

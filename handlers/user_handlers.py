@@ -3,6 +3,7 @@ import datetime as dt
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery, URLInputFile
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from keyboards.keyboards import language_buttons, language_kb, birthdays_kb
 from services.services import (get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number,
@@ -10,9 +11,13 @@ from services.services import (get_args, get_weather, get_random_http, check_htt
 from services.db_services import Database
 from lexicon.lexicon import LEXICON
 
-# Создаём роутер и базу данных
+# Создаём роутер
 router = Router()
+
+# Инициализируем базу данных и шедулер
 db = Database()
+scheduler = AsyncIOScheduler()
+
 
 """ SERVICE HANDLERS """
 
@@ -185,7 +190,7 @@ async def process_random_command(message: Message):
 
 # Этот хэндлер срабатывает на команду /qr_code
 @router.message(Command(commands='qr_code'))
-async def process_random_command(message: Message):
+async def process_qr_code_command(message: Message):
     lang = await db.get_language(message.from_user.id)
 
     args = message.text.split()
@@ -230,7 +235,7 @@ async def process_random_command(message: Message):
 
 # Этот хэндлер срабатывает на команду /birthdays
 @router.message(Command(commands='birthdays'))
-async def process_random_command(message: Message):
+async def process_birthdays_command(message: Message):
     lang = await db.get_language(message.from_user.id)
 
     # Если сообщение слишком длинное, то отвечаем исключением
@@ -248,7 +253,8 @@ async def process_random_command(message: Message):
             answer = []
             counter = 1
             for birthday_id, user_id, name, date, years in birthdays:
-                answer.append(LEXICON[lang]["COMMANDS"]["birthdays"]["birthday"].format(id=counter, name=name, date=date, years=years))
+                delimiter = " " * (8 - len(str(counter)) * 2)
+                answer.append(LEXICON[lang]["COMMANDS"]["birthdays"]["birthday"].format(id=counter, name=name, date=date, years=years, delimiter=delimiter))
                 counter += 1
 
             await message.answer(text="\n".join(answer),
@@ -292,6 +298,7 @@ async def process_random_command(message: Message):
                 date = dt.date(year, month, day)
                 years = int(args[4])
                 await db.add_birthday(message.from_user.id, name, date, years)
+                # scheduler.add_job()
 
             else:
                 await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
