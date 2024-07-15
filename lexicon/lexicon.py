@@ -44,7 +44,8 @@ LEXICON: dict = {
             "start": "<b>/start</b> - <i>Вывести приветственное сообщение.</i>",
             "help": "<b>/help</b> - <i>Вывести список команд.</i>",
             'man': '<b>/man {commands}</b> - <i>Вывести документацию отдельно для каждой команды. Пишите команды без слеша.</i>',
-            "language": "<b>/language</b> - <i>Выбрать язык коммуникации.</i>",
+            "language": "<b>/language</b> - <i>Выбрать язык коммуникации.</i>\n"
+                        "<b>/language change [lang]</b> - <i>Сменить текущий язык на другой (RU | Русский | EN | English).</i>",
             "weather": "<b>/weather [city]</b> - <i>Вывести прогноз погоды на сегодня в городе city.</i>",
             "http_in_cat": "<b>/http_in_cat [*code]</b> - <i>Вывести случайную картинку с кодом http или с переданным code.</i>",
             "random": "<b>/random [*end] | /random [*start] [*end]</b> - <i>Выводит рандомное число от 0 до 100, если не переданы аргументы. \n"
@@ -105,7 +106,8 @@ LEXICON: dict = {
             "start": "<b>/start</b> - <i>Display a welcome message.</i>",
             "help": "<b>/help</b> - <i>Display a list of commands.</i>",
             'man': '<b>/man {commands}</b> - <i>Output documentation separately for each command. Write commands without slash.</i>',
-            "language": "<b>/language</b> - <i>Select communication language.</i>",
+            "language": "<b>/language</b> - <i>Select communication language.</i>\n"
+                        "<b>/language change [lang]</b> - <i>Change the current language to another (RU | Русский | EN | English).</i>",
             "weather": "<b>/weather [city]</b> - <i>Display the weather forecast for today in the city city.</i>",
             "http_in_cat": "<b>/http_in_cat [*code]</b> - <i>Output a random picture with the http code or with the passed code.</i>",
             "random": "<b>/random [*end] | /random [*start] [*end]</b> - <i>Outputs a random number from 0 to 100 if no arguments are passed.\n"
