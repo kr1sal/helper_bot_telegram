@@ -4,8 +4,10 @@ import logging
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 
-from config_data.config import config
-from handlers import user_handlers
+from config import config
+from handlers import start_router, user_router, admin_router
+from services import db
+from lexicon import LEXICON
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -27,8 +29,10 @@ async def main():
               default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher()
 
-    # Регистрируем роутер в диспетчере
-    dp.include_router(user_handlers.router)
+    # Регистрируем роутеры в диспетчере
+    dp.include_router(start_router)
+    dp.include_router(admin_router)
+    dp.include_router(user_router)
 
     # Пропускаем накопившиеся updates и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)

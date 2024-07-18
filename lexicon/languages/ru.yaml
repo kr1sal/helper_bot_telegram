@@ -1,0 +1,29 @@
+id: ru
+name: Русский
+
+help:
+  start: "<b>/start</b> - <i>Вывести приветственное сообщение.</i>"
+  help: "<b>/help</b> - <i>Вывести список команд.</i>"
+  man: '<b>/man {commands}</b> - <i>Вывести документацию отдельно для каждой команды. Пишите команды без слеша.</i>'
+  language: "<b>/language</b> - <i>Выбрать язык коммуникации.</i>\n"
+
+commands:
+  start: "<b>Привет!\n
+  Я виртуальный помощник</b>\n\n
+  Чтобы получить список команд введите /help\n\n
+  Для смены языка введите /language"
+  man: "Справка: [аргумент] {множество аргументов} [*аргумент], где *необязательный."
+  language:
+    select: "Выберите язык!"
+    change: "Вы сменили язык: {language_old} ==> {language}."
+  weather:
+    main: "Погода в <b>{city}</b> сейчас такая:"
+    description: "За окном: <b>{description}</b>"
+    temperature: "Температура: <b>{temperature}°C</b>"
+    wind_speed: "Скорость ветра: <b>{wind_speed}</b> м/с"
+    not_found: "Невозможно определить погоду для <b>{city}</b>."
+  birthdays:
+    birthday: "№{id}{delimiter}У {name} ({years}) в {date} ДР!"
+
+errors:
+  not_registered: "Вы не зарегистрированы в базе данных! Введите команду /start!"

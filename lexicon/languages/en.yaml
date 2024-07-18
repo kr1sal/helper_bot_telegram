@@ -1,0 +1,29 @@
+id: en
+name: English
+
+help:
+  start: "<b>/start</b> - <i>Display a welcome message.</i>"
+  help: "<b>/help</b> - <i>Display a list of commands.</i>"
+  man: '<b>/man {commands}</b> - <i>Output documentation separately for each command. Write commands without slash.</i>'
+  language: "<b>/language</b> - <i>Select communication language.</i>\n"
+
+commands:
+  start: "<b>Hello!\n
+  I'm a virtual assistant</b>\n\n
+  To get a list of commands type /help\n\n
+  To change the language, enter /language"
+  man: "Help: [argument] {set of arguments} [*argument], where *optional."
+  language:
+    select: "Select a language!"
+    change: "You have changed your language: {language_old} ==> {language}."
+  weather:
+    main: "The weather in <b>{city}</b> is now like this:"
+    description: "Outside the window: <b>{description}</b>"
+    temperature: "Temperature: <b>{temperature}°C</b>"
+    wind_speed: "Wind speed: <b>{wind_speed}</b> m/s"
+    not_found: "Unable to determine the weather for <b>{city}</b>."
+  birthdays:
+    birthday: "№{id}{delimiter}В {name} ({years}) on {date} BD!"
+
+errors:
+  not_registered: "You are not registered in the database! Enter the /start command!"

@@ -1,51 +1,30 @@
 import datetime as dt
 
 from aiogram import F, Router
-from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery, URLInputFile
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery
 
-from keyboards.keyboards import language_buttons, language_kb, birthdays_kb
-from services.services import (get_args, get_weather, get_random_http, check_http, get_http_in_cat, get_random_number,
-                               get_qr_code, multi_split)
-from services.db_services import Database
+from middlewares import LanguageCheck
+from keyboards import language_buttons, language_kb, birthdays_kb
+from services import *
+from services import db
 from lexicon.lexicon import LEXICON
 
-# Создаём роутер
+
+# Инициализируем router и регистрируем middleware для незарегистрированных пользователей
 router = Router()
-
-# Инициализируем базу данных и шедулер
-db = Database()
-scheduler = AsyncIOScheduler()
+router.message.middleware(LanguageCheck())
 
 
-""" SERVICE HANDLERS """
-
-
-# Этот хэндлер срабатывает на команду /start
-@router.message(CommandStart())
-async def process_start_command(message: Message):
-    # Добавляем пользователя в базу данных
-    await db.add_user(message.from_user.id)
-    # Получаем язык коммуникации, по умолчанию английский EN
-    lang = await db.get_language(message.from_user.id)
-    # Достаём ответ из словаря лексикона
-    answer = LEXICON[lang]["COMMANDS"]["start"]
-
-    await message.answer(text=answer)
-
-
-# Этот хэндлер срабатывает на команду /help
 @router.message(Command(commands='help'))
 async def process_help_command(message: Message):
     lang = await db.get_language(message.from_user.id)
 
-    answer = LEXICON[lang]["HELP"].values()
+    answer = LEXICON[lang]["help"].values()
 
     await message.answer(text="\n\n".join(answer))
 
 
-# Этот хэндлер срабатывает на команду /man
 @router.message(Command(commands='man'))
 async def process_man_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -65,7 +44,6 @@ async def process_man_command(message: Message):
     await message.answer(text="\n\n".join(answer))
 
 
-# Этот хэндлер срабатывает на команду /language
 @router.message(Command(commands='language'))
 async def process_language_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -101,7 +79,6 @@ async def process_language_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
-# Этот хэндлер срабатывает на команду /weather
 @router.message(Command(commands='weather'))
 async def process_weather_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -131,7 +108,6 @@ async def process_weather_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
-# Этот хэндлер срабатывает на команду /http_in_cat
 @router.message(Command(commands='http_in_cat'))
 async def process_http_in_cat_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -158,7 +134,6 @@ async def process_http_in_cat_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
-# Этот хэндлер срабатывает на команду /random
 @router.message(Command(commands='random'))
 async def process_random_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -188,7 +163,6 @@ async def process_random_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
-# Этот хэндлер срабатывает на команду /qr_code
 @router.message(Command(commands='qr_code'))
 async def process_qr_code_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -233,7 +207,6 @@ async def process_qr_code_command(message: Message):
             await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
 
 
-# Этот хэндлер срабатывает на команду /birthdays
 @router.message(Command(commands='birthdays'))
 async def process_birthdays_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -349,7 +322,6 @@ async def process_birthdays_command(message: Message):
 """ CALLBACK QUERY """
 
 
-# хендлер отвечает за CallbackQuery {language}_button_pressed
 @router.callback_query(F.data.in_([lang_button.callback_data for lang_button in language_buttons]))
 async def process_buttons_press(callback: CallbackQuery):
     # Получаем язык, на который хотим поменять текущий
@@ -362,15 +334,3 @@ async def process_buttons_press(callback: CallbackQuery):
 
     await callback.answer(text=answer)
 
-
-""" OTHER HANDLERS """
-
-
-# Хэндлер для сообщений, которые не попали в другие хэндлеры
-@router.message()
-async def send_answer(message: Message):
-    lang = await db.get_language(message.from_user.id)
-
-    answer = LEXICON[lang]["BASE"]["other_answer"]
-
-    await message.answer(text=answer)

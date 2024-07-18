@@ -1,4 +1,39 @@
-LEXICON: dict = {
+import logging
+
+import os
+import yaml
+
+logger = logging.getLogger(__name__)
+
+
+def load_lexicon(path: str | None = "lexicon/languages/") -> dict:
+    # Получаем все файлы с языковыми ресурсами из languages/
+    lang_dirs = [path + lang_dir for lang_dir in os.listdir(path)]
+    languages = {}
+
+    for lang_dir in lang_dirs:
+        with open(lang_dir, encoding="UTF-8") as lang_file:
+            lang = yaml.safe_load(lang_file)
+
+            # Если словарь не содержит необходимые для работы id и name, то пропускаем
+            if not (lang and lang["id"] and lang["name"]):
+                logger.warning(f"Failed to load language {lang['name']}!")
+                break
+
+            # Меняем регистр для правильной работы
+            lang["id"] = lang["id"].lower()
+
+            languages[lang["id"]] = lang
+
+    if not languages:
+        logger.critical("CRITICAL! No languages loaded!")
+
+    return languages
+
+
+LEXICON = load_lexicon()
+
+"""LEXICON: dict = {
     # Русский
     "RU": {
         "name": "Русский",
@@ -122,4 +157,4 @@ LEXICON: dict = {
                          "To indicate a name consisting of more than one word, you must separate it with quotation marks \" or \'.</i>",
         },
     }
-}
+}"""

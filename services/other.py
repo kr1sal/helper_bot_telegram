@@ -1,44 +1,9 @@
 from random import choice, randint
-import re
-from typing import List
 from urllib.request import urlopen
 import requests
 from aiogram.types import URLInputFile
 
-from config_data.config import config
-
-
-""" BASE FUNCTIONS """
-
-
-# Преобразовать строку с командой в аргументы
-def get_args(string: str) -> List[str]:
-    args: list[str] = []
-
-    word = ""
-    merge = False
-    for c in string:
-        if c != "\'" and c != "\"":
-            if c != " " or merge:
-                word += c
-            elif word and not merge:
-                args.append(word)
-                word = ""
-        else:
-            merge = not merge
-
-    if word:
-        args.append(word)
-
-    return args
-
-
-# Выводит список из разделённых строк с помощью множества разделителей
-def multi_split(separators: List[str], string: str) -> List[str]:
-    return re.split(f"[{''.join(separators)}]", string)
-
-
-""" COMMANDS FUNCTIONS """
+from config import config
 
 
 # Прогноз погоды по API
@@ -48,7 +13,7 @@ def get_weather(city: str, lang: str = "EN"):
     weather_response = requests.get(weather_url)
     weather_data = weather_response.json()
 
-    weather_report = ()
+    weather_report = None
     # Обрабатываем запрос
     if weather_response.status_code == 200:
         # Обработка полученной информации
@@ -75,12 +40,12 @@ def get_random_http() -> int:
 
 # Проверить код http на существование в HTTP_CODES
 def check_http(code: int) -> int:
-    return True if code in HTTP_CODES else False
+    return True if code in HTTP_CODES else None
 
 
 # Получить изображение кота, в котором зашифрован код HTTP по API
 def get_http_in_cat(code: int):
-    return URLInputFile(f"https://http.cat/{code}") if check_http(code) else False
+    return URLInputFile(f"https://http.cat/{code}") if check_http(code) else None
 
 
 # Получить рандомное число
@@ -92,6 +57,7 @@ def get_random_number(start: int = 0, end: int = 100) -> int:
 
 # Получить qr-код по API (0 - неизвестная ошибка, 1 - не открыть ресурс по url, 2 - формат файла не поддерживается)
 def get_qr_code(url: str, size: int = None, file_format: str = "png", transparent: bool = False):
+    """
     try:
         urlopen(url)
     except Exception:
@@ -106,5 +72,5 @@ def get_qr_code(url: str, size: int = None, file_format: str = "png", transparen
     file_format = '.' + file_format if file_format[0] != '.' else file_format
 
     # print(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
-
+    """
     return URLInputFile(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
