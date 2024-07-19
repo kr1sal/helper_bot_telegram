@@ -1,96 +1,73 @@
-import sqlite3 as sq
-import datetime as dt
+import aiosqlite as sq
 
 from config import config
 
-sq.register_adapter(bool, int)
-
 
 class Database:
-    # Соединяемся с базой данных
-    def __init__(self):
-        self.connection = sq.connect("db.sql")
-        self.cursor = self.connection.cursor()
+    def __init__(self, name: str):
+        self.name: str = name
 
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            language TEXT
-            );
-        """)
+    # Создаём таблицы, если они ещё не созданы
+    async def create_tables(self):
+        async with sq.connect(self.name) as connection:
+            await connection.execute("""
+                CREATE TABLE IF NOT EXISTS admins (
+                user_id INTEGER PRIMARY KEY
+                );
+            """)
 
-        self.cursor.execute("""
-            CREATE TABLE IF NOT EXISTS birthdays (
-            birthday_id INTEGER PRIMARY KEY,
-            user_id INTEGER,
-            name TEXT,
-            date DATE,
-            years INTEGER
-            );
-        """)
+            await connection.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                user_id INTEGER PRIMARY KEY,
+                language TEXT
+                );
+            """)
 
-        self.connection.commit()
+            await connection.execute("""
+                CREATE TABLE IF NOT EXISTS birthdays (
+                birthday_id INTEGER PRIMARY KEY,
+                user_id INTEGER,
+                name TEXT,
+                date DATE,
+                years INTEGER
+                );
+            """)
 
-    # Завершаем работу с базой данных
-    def __del__(self):
-        self.cursor.close()
-        self.connection.close()
+            await connection.commit()
 
-    # Добавляем нового пользователя в дб
-    async def add_user(self, user_id: int) -> bool:
-        user = self.cursor.execute("SELECT 1 FROM users WHERE user_id = ?;",
-                                   (user_id,)).fetchone()
-        # если пользователь не существует, то добавить в дб и вернуть True, иначе False
-        if not user:
-            self.cursor.execute("INSERT INTO users VALUES(?, ?);",
-                                (user_id, config.default_language))
-            self.connection.commit()
-            return True
+    async def add_user(self, user_id: int):
+        async with sq.connect(self.name) as connection:
+            await connection.execute("INSERT INTO users VALUES(?, ?);", (user_id, config.default_language))
+            await connection.commit()
 
-        return False
-
-    # Проверяет, существует ли пользователь
-    async def get_user(self, user_id: int) -> list | None:
-        user = self.cursor.execute("SELECT * FROM users WHERE user_id = ?;",
-                                   (user_id,)).fetchone()
-        return user
-
-    # Удаляет пользователя из базы данных
     async def delete_user(self, user_id: int):
-        self.cursor.execute("DELETE FROM users WHERE user_id = ?",
-                            (user_id,))
+        async with sq.connect(self.name) as connection:
+            await connection.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+            await connection.commit()
 
-    """ LANGUAGES """
-    # Устанавливает язык общения
+    async def get_user(self, user_id: int) -> tuple:
+        async with sq.connect(self.name) as connection:
+            async with connection.execute("SELECT * FROM users WHERE user_id = ?;", (user_id,)) as cursor:
+                return await cursor.fetchone()
+
     async def set_language(self, user_id: int, language: str):
-        self.cursor.execute(f"UPDATE users SET language = ? WHERE user_id = ?",
-                            (language, user_id))
-        self.connection.commit()
+        async with sq.connect(self.name) as connection:
+            await connection.execute(f"UPDATE users SET language = ? WHERE user_id = ?", (language, user_id))
+            await connection.commit()
 
-    # Меняет язык общения и возвращает старый
-    async def change_language(self, user_id: int, language: str) -> str | None:
-        # Получаем старый язык пользователя
-        language_old = self.cursor.execute("SELECT language FROM users WHERE user_id = ?",
-                                           (user_id,)).fetchone()
-        # Меняем язык
-        self.cursor.execute(f"UPDATE users SET language = ? WHERE user_id = ?",
-                            (language, user_id))
-        self.connection.commit()
+    async def get_language(self, user_id: int) -> str:
+        async with sq.connect(self.name) as connection:
+            async with connection.execute("SELECT language FROM users WHERE user_id = ?", (user_id,)) as cursor:
+                language: tuple = await cursor.fetchone()
+                if not language:
+                    return ""
+                return language[0]
 
-        if not language_old:
-            return
 
-        return language_old[0]
+db: Database = Database("db.sql")
 
-    # Получить язык пользователя
-    async def get_language(self, user_id: int) -> str | None:
-        language = self.cursor.execute("SELECT language FROM users WHERE user_id = ?",
-                                       (user_id,)).fetchone()
-        if not language:
-            return
 
-        return language[0]
-
+'''
     """ BIRTHDAYS """
 
     # Добавить день рождение в базу (уникальный name)
@@ -139,3 +116,4 @@ class Database:
 
 
 db = Database()
+'''

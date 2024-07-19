@@ -9,7 +9,7 @@ from aiogram.types import Message, CallbackQuery
 from middlewares import RegisterCheck
 from filters import MessageData, CallbackQueryData
 from fsm import FSM
-from keyboards import language_buttons, language_kb, birthdays_kb
+from keyboards import language_buttons, language_kb
 from services import Database
 from services import get_weather
 
@@ -108,7 +108,8 @@ async def process_change_language(message: Message, lang: str, lexicon: dict, db
             if arg in lang_id or arg in lang_name:
                 # Используем id языков, чтобы получить соответствующие языковые ресурсы (keys for lexicon)
                 lang = lang_id
-                lang_old = await db.change_language(message.from_user.id, lang)
+                lang_old = await db.get_language(message.from_user.id)
+                await db.set_language(message.from_user.id, lang)
 
                 answer = lexicon[lang]["commands"]["language"]["change"].format(
                     language_old=lexicon[lang_old]["name"], language=lexicon[lang]["name"])
@@ -129,7 +130,8 @@ async def change_language(callback: CallbackQuery, lexicon: dict, db: Database):
     lang = lang.lower()
 
     # Меняем язык на lang и получаем прошлый, на котором разговаривал бот
-    lang_old = await db.change_language(callback.from_user.id, lang)
+    lang_old = await db.get_language(callback.from_user.id)
+    await db.set_language(callback.from_user.id, lang)
 
     answer = lexicon[lang]["commands"]["language"]["change"].format(
         language_old=lexicon[lang_old]["name"], language=lexicon[lang]["name"])
@@ -161,7 +163,7 @@ async def process_get_city(message: Message, lang: str, lexicon: dict, state: FS
     # Если ответ не пустой, то обрабатываем его
     if answer:
         await state.clear()
-        await message.asnwer(text="\n".join((
+        await message.answer(text="\n".join((
             lexicon[lang]["commands"]["weather"]["main"].format(city=answer[0]),
             lexicon[lang]["commands"]["weather"]["description"].format(description=answer[1]),
             lexicon[lang]["commands"]["weather"]["temperature"].format(temperature=answer[2]),
@@ -169,7 +171,7 @@ async def process_get_city(message: Message, lang: str, lexicon: dict, state: FS
         )))
     # Иначе выводит - город не найден
     else:
-        await message.asnwer(text=lexicon[lang]["errors"]["city_not_found"].format(city=message.text))
+        await message.answer(text=lexicon[lang]["errors"]["city_not_found"].format(city=message.text))
 
 """
 @router.message(Command(commands='http_in_cat'))

@@ -7,6 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import config
 from handlers import start_router, user_router, admin_router
+from services import db
 
 # Инициализируем логгер
 logger = logging.getLogger(__name__)
@@ -34,6 +35,9 @@ async def main():
     dp.include_router(start_router)
     dp.include_router(admin_router)
     dp.include_router(user_router)
+
+    # Создаём таблицы базы данных
+    await db.create_tables()
 
     # Пропускаем накопившиеся updates и запускаем polling
     await bot.delete_webhook(drop_pending_updates=True)

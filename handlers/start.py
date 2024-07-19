@@ -16,12 +16,10 @@ router = Router()
 
 @router.message(CommandStart(), MessageData(), StateFilter(default_state))
 async def process_start_command(message: Message, lang: str, lexicon: dict, db: Database):
-    # Добавляем пользователя в базу данных и возвращаем результат в переменную
-    added: bool = await db.add_user(message.from_user.id)
-    # Если пользователь добавлен в базу данных, то информируем
-    if added:
-        logger.info(f"New user (id: {message.from_user.id}) added to the database!")
+    # Если пользователя нет в базе данных, то регистрируем его
+    if not await db.get_user(message.from_user.id):
+        await db.add_user(message.from_user.id)
 
-        # await message.answer(text=lexicon[lang]["commands"]["start"]["added"])
+        logger.info(f"New user (id: {message.from_user.id}) added to the database!")
 
     await message.answer(text=lexicon[lang]["commands"]["start"]["hello"])

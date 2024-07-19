@@ -25,4 +25,4 @@ def get_args(string: str) -> list[str]:
 
 # Выводит список из разделённых строк с помощью множества разделителей
 def multi_split(separators: list[str], string: str) -> list[str]:
-    return split(f"[{''.join(separators)}]", string)
+    return split(f"[{''.join(separators)}]", string.strip())
