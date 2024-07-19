@@ -1,1 +1,1 @@
-from .language_check import LanguageCheck
+from .register_check import RegisterCheck

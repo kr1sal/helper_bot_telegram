@@ -37,20 +37,28 @@ class Database:
         self.connection.close()
 
     # Добавляем нового пользователя в дб
-    async def add_user(self, user_id: int):
-        user = self.cursor.execute(f"SELECT 1 FROM users WHERE user_id = ?;",
+    async def add_user(self, user_id: int) -> bool:
+        user = self.cursor.execute("SELECT 1 FROM users WHERE user_id = ?;",
                                    (user_id,)).fetchone()
-        # если пользователь не существует, то добавить в дб
+        # если пользователь не существует, то добавить в дб и вернуть True, иначе False
         if not user:
             self.cursor.execute("INSERT INTO users VALUES(?, ?);",
                                 (user_id, config.default_language))
             self.connection.commit()
+            return True
+
+        return False
 
     # Проверяет, существует ли пользователь
     async def get_user(self, user_id: int) -> list | None:
-        user = self.cursor.execute(f"SELECT * FROM users WHERE user_id = ?;",
+        user = self.cursor.execute("SELECT * FROM users WHERE user_id = ?;",
                                    (user_id,)).fetchone()
         return user
+
+    # Удаляет пользователя из базы данных
+    async def delete_user(self, user_id: int):
+        self.cursor.execute("DELETE FROM users WHERE user_id = ?",
+                            (user_id,))
 
     """ LANGUAGES """
     # Устанавливает язык общения
@@ -125,7 +133,7 @@ class Database:
         return birthdays
 
     # Удалить день рождение из базы данных
-    async def delete_birthday(self, birthday_id: int) -> None:
+    async def delete_birthday(self, birthday_id: int):
         self.cursor.execute("DELETE FROM birthdays WHERE birthday_id = ?;",
                             (birthday_id,))
 

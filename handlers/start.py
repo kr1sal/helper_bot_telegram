@@ -1,21 +1,27 @@
+import logging
+
 from aiogram import Router
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, StateFilter
+from aiogram.fsm.state import default_state
 from aiogram.types import Message
 
-from services import db
-from lexicon.lexicon import LEXICON
+from filters import MessageData
+from services import Database
+
+logger = logging.getLogger(__name__)
 
 # Инициализируем router
 router = Router()
 
 
-@router.message(CommandStart())
-async def process_start_command(message: Message):
-    # Добавляем пользователя в базу данных
-    await db.add_user(message.from_user.id)
-    # Получаем язык коммуникации, по умолчанию английский en
-    lang = await db.get_language(message.from_user.id)
-    # Достаём ответ из словаря лексикона
-    answer = LEXICON[lang]["commands"]["start"]
+@router.message(CommandStart(), MessageData(), StateFilter(default_state))
+async def process_start_command(message: Message, lang: str, lexicon: dict, db: Database):
+    # Добавляем пользователя в базу данных и возвращаем результат в переменную
+    added: bool = await db.add_user(message.from_user.id)
+    # Если пользователь добавлен в базу данных, то информируем
+    if added:
+        logger.info(f"New user (id: {message.from_user.id}) added to the database!")
 
-    await message.answer(text=answer)
+        # await message.answer(text=lexicon[lang]["commands"]["start"]["added"])
+
+    await message.answer(text=lexicon[lang]["commands"]["start"]["hello"])
