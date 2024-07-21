@@ -5,20 +5,19 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
 from middlewares import RegisterCheck
-from filters import MessageData, CallbackQueryData
 from fsm import FSM
 from keyboards import language_buttons, language_kb
 from services import Database
 from services import get_weather, get_http_in_cat, get_random_number, check_url, check_file_format, get_qr_code
 
 
-# Инициализируем router и регистрируем middleware для незарегистрированных пользователей
+# Инициализируем router
 router = Router()
 router.message.middleware(RegisterCheck())
 
 
 # Этот хендлер нужен, чтобы войти в состояние command_line, при котором доступны все команды
-@router.message(Command(commands="cancel"), MessageData(), ~StateFilter(default_state))
+@router.message(Command(commands="cancel"), ~StateFilter(default_state))
 async def process_cancel_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
     await state.clear()
 
@@ -26,21 +25,21 @@ async def process_cancel_command(message: Message, lang: str, lexicon: dict, sta
 
 
 # Этот хендлер нужен, чтобы удалить данные о пользователе из базы данных
-@router.message(Command(commands="delete_all_data"), MessageData(), StateFilter(default_state))
+@router.message(Command(commands="delete_all_data"), StateFilter(default_state))
 async def process_delete_all_data(message: Message, lang: str, lexicon: dict, db: Database):
     await db.delete_user(message.from_user.id)
 
     await message.answer(text=lexicon[lang]["commands"]["delete_all_data"])
 
 
-@router.message(Command(commands="help"), MessageData(), StateFilter(default_state))
+@router.message(Command(commands="help"), StateFilter(default_state))
 async def process_help_command(message: Message, lang: str, lexicon: dict):
     answer: str = lexicon[lang]["help"].values()
 
     await message.answer(text="\n\n".join(answer))
 
 
-@router.message(Command(commands="man"), MessageData(), StateFilter(default_state))
+@router.message(Command(commands="man"), StateFilter(default_state))
 async def process_man_command(message: Message, lang: str, lexicon: dict):
     args: list[str] = message.text.split()
 
@@ -57,7 +56,7 @@ async def process_man_command(message: Message, lang: str, lexicon: dict):
     await message.answer(text="\n\n".join(answer))
 
 
-@router.message(Command(commands="language"), MessageData(), StateFilter(default_state))
+@router.message(Command(commands="language"), StateFilter(default_state))
 async def process_language_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
     args: list[str] = message.text.split()
 
@@ -91,7 +90,7 @@ async def process_language_command(message: Message, lang: str, lexicon: dict, s
 """ Language """
 
 
-@router.message(MessageData(), StateFilter(FSM.change_language_state))
+@router.message(StateFilter(FSM.change_language_state))
 async def process_change_language(message: Message, lang: str, lexicon: dict, db: Database, state: FSMContext):
     args: list[str] = message.text.split()
 
@@ -119,7 +118,7 @@ async def process_change_language(message: Message, lang: str, lexicon: dict, db
         await message.answer(text=lexicon[lang]["commands"]["language"]["enter"].format(langs=", ".join(langs)))
 
 
-@router.callback_query(F.data.in_([lang_button.callback_data for lang_button in language_buttons]), CallbackQueryData(), StateFilter(default_state))
+@router.callback_query(F.data.in_([lang_button.callback_data for lang_button in language_buttons]), StateFilter(default_state))
 async def change_language(callback: CallbackQuery, lexicon: dict, db: Database):
     # Получаем язык, на который хотим поменять текущий
     lang = callback.data.title().upper()[:2]
@@ -138,7 +137,7 @@ async def change_language(callback: CallbackQuery, lexicon: dict, db: Database):
 """ Weather """
 
 
-@router.message(Command(commands='weather'), MessageData(), StateFilter(default_state))
+@router.message(Command(commands='weather'), StateFilter(default_state))
 async def process_weather_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
     args = message.text.split()
 
@@ -153,7 +152,7 @@ async def process_weather_command(message: Message, lang: str, lexicon: dict, st
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-@router.message(MessageData(), StateFilter(FSM.get_city_state))
+@router.message(StateFilter(FSM.get_city_state))
 async def process_get_city(message: Message, lang: str, lexicon: dict, state: FSMContext):
     answer = get_weather(message.text, lang.upper())
     # Если ответ не пустой, то обрабатываем его
@@ -170,7 +169,7 @@ async def process_get_city(message: Message, lang: str, lexicon: dict, state: FS
         await message.answer(text=lexicon[lang]["errors"]["city_not_found"].format(city=message.text))
 
 
-@router.message(Command(commands='http_in_cat'), MessageData(), StateFilter(default_state))
+@router.message(Command(commands='http_in_cat'), StateFilter(default_state))
 async def process_http_in_cat_command(message: Message, lang: str, lexicon: dict):
     args = message.text.split()
 
@@ -197,7 +196,7 @@ async def process_http_in_cat_command(message: Message, lang: str, lexicon: dict
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-@router.message(Command(commands='random'), MessageData(), StateFilter(default_state))
+@router.message(Command(commands='random'), StateFilter(default_state))
 async def process_random_command(message: Message, lang: str, lexicon: dict):
     args = message.text.split()
 
@@ -225,7 +224,7 @@ async def process_random_command(message: Message, lang: str, lexicon: dict):
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-@router.message(Command(commands='qr_code'), MessageData(), StateFilter(default_state))
+@router.message(Command(commands='qr_code'), StateFilter(default_state))
 async def process_qr_code_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
     args = message.text.split()
 
@@ -239,7 +238,7 @@ async def process_qr_code_command(message: Message, lang: str, lexicon: dict, st
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-@router.message(MessageData(), StateFilter(FSM.get_qr_code_state))
+@router.message(StateFilter(FSM.get_qr_code_state))
 async def process_get_qr_code(message: Message, lang: str, lexicon: dict, state: FSMContext):
     args = message.text.split()
 
@@ -273,52 +272,12 @@ async def process_get_qr_code(message: Message, lang: str, lexicon: dict, state:
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-"""
-@router.message(Command(commands='qr_code'))
-async def process_qr_code_command(message: Message):
-    lang = await db.get_language(message.from_user.id)
-
-    args = message.text.split()
-    match len(args):
-        # Если введена только команда, то выводит справку
-        case 1:
-            await message.answer(text=LEXICON[lang]["HELP"]["qr_code"])
-
-        # Если есть второй аргумент, считаем его ссылкой и обрабатываем ошибки
-        case 2:
-            answer = get_qr_code(args[1])
-            if type(answer) is URLInputFile:
-                await message.answer_photo(photo=answer)
-            elif answer == 1:
-                await message.answer(text=LEXICON[lang]["COMMANDS"]["wrong_url"])
-            elif answer == 2:
-                await message.answer(text=LEXICON[lang]["COMMANDS"]["wrong_file_format"])
-            else:
-                await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
-
-        # Не работает
-        case 5:
-            await message.answer(text=LEXICON[lang]["BASE"]["tech_work"])
-"""
-"""
-            try:
-                if args[4].lower() == "true":
-                    answer = get_qr_code(url=args[1], size=int(args[2]), file_format=args[3], transparent=True)
-                else:
-                    answer = get_qr_code(args[1], int(args[2]), args[3])
-    
-                if type(answer) is get_type_of_urlinputfile():
-                    await message.answer_photo(photo=answer)
-                else:
-                    await message.answer(text=answer)
-            except TypeError:
-                await message.answer(text=BASE["invalid"])
-"""
-"""
-        case _:
-            await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+@router.message(Command(commands='birthdays'), StateFilter(default_state))
+async def process_birthdays_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
+    pass
 
 
+"""
 @router.message(Command(commands='birthdays'))
 async def process_birthdays_command(message: Message):
     lang = await db.get_language(message.from_user.id)
@@ -433,6 +392,6 @@ async def process_birthdays_command(message: Message):
 
 
 # Этот хендлер отвечает, если были проигнорированы другие хендлеры
-@router.message(MessageData(), StateFilter(default_state))
+@router.message(StateFilter(default_state))
 async def process_other_command(message: Message, lang: str, lexicon: dict):
     await message.answer(text=lexicon[lang]["commands"]["other"])

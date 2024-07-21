@@ -6,6 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.fsm.storage.memory import MemoryStorage
 
 from config import config
+from middlewares import DataExtend
 from handlers import start_router, user_router, admin_router
 from services import db
 
@@ -30,6 +31,10 @@ async def main():
     bot = Bot(token=config.bot_token,
               default=DefaultBotProperties(parse_mode='HTML'))
     dp = Dispatcher(storage=storage)
+
+    # Регистрируем мидлварь, которая расширяет данные для хендлеров
+    dp.message.middleware.register(DataExtend())
+    dp.callback_query.middleware.register(DataExtend())
 
     # Регистрируем роутеры в диспетчере
     dp.include_router(start_router)

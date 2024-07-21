@@ -5,7 +5,6 @@ from aiogram.filters import CommandStart, StateFilter
 from aiogram.fsm.state import default_state
 from aiogram.types import Message
 
-from filters import MessageData
 from services import Database
 
 logger = logging.getLogger(__name__)
@@ -14,7 +13,7 @@ logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.message(CommandStart(), MessageData(), StateFilter(default_state))
+@router.message(CommandStart(), StateFilter(default_state))
 async def process_start_command(message: Message, lang: str, lexicon: dict, db: Database):
     # Если пользователя нет в базе данных, то регистрируем его
     if not await db.get_user(message.from_user.id):
