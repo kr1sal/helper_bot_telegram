@@ -1,5 +1,3 @@
-import datetime as dt
-
 from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.state import default_state
@@ -11,7 +9,7 @@ from filters import MessageData, CallbackQueryData
 from fsm import FSM
 from keyboards import language_buttons, language_kb
 from services import Database
-from services import get_weather, get_http_in_cat, get_random_number
+from services import get_weather, get_http_in_cat, get_random_number, check_url, check_file_format, get_qr_code
 
 
 # Инициализируем router и регистрируем middleware для незарегистрированных пользователей
@@ -79,7 +77,7 @@ async def process_language_command(message: Message, lang: str, lexicon: dict, s
                     langs.append(value["name"])
                 # Устанавливаем состояние, передаём языки в data и отвечаем сообщением
                 await state.set_data({"langs": langs})
-                await state.set_state(FSM.change_language)
+                await state.set_state(FSM.change_language_state)
                 await message.answer(text=lexicon[lang]["commands"]["language"]["enter"].format(langs=", ".join(langs)))
 
             else:
@@ -93,7 +91,7 @@ async def process_language_command(message: Message, lang: str, lexicon: dict, s
 """ Language """
 
 
-@router.message(MessageData(), StateFilter(FSM.change_language))
+@router.message(MessageData(), StateFilter(FSM.change_language_state))
 async def process_change_language(message: Message, lang: str, lexicon: dict, db: Database, state: FSMContext):
     args: list[str] = message.text.split()
 
@@ -147,7 +145,7 @@ async def process_weather_command(message: Message, lang: str, lexicon: dict, st
     match len(args):
         # Если указана только команда, то переходим в состояние get_city
         case 1:
-            await state.set_state(FSM.get_city)
+            await state.set_state(FSM.get_city_state)
             await message.answer(text=lexicon[lang]["commands"]["weather"]["enter_city"])
 
         # Иначе выводим
@@ -155,7 +153,7 @@ async def process_weather_command(message: Message, lang: str, lexicon: dict, st
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-@router.message(MessageData(), StateFilter(FSM.get_city))
+@router.message(MessageData(), StateFilter(FSM.get_city_state))
 async def process_get_city(message: Message, lang: str, lexicon: dict, state: FSMContext):
     answer = get_weather(message.text, lang.upper())
     # Если ответ не пустой, то обрабатываем его
@@ -227,36 +225,54 @@ async def process_random_command(message: Message, lang: str, lexicon: dict):
             await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-"""
-@router.message(Command(commands='random'))
-async def process_random_command(message: Message):
-    lang = await db.get_language(message.from_user.id)
-
+@router.message(Command(commands='qr_code'), MessageData(), StateFilter(default_state))
+async def process_qr_code_command(message: Message, lang: str, lexicon: dict, state: FSMContext):
     args = message.text.split()
+
     match len(args):
-        # Если введена только команда, то возвращаем рандомное число от 0 до 100
         case 1:
-            await message.answer(text=str(get_random_number()))
+            await state.set_state(FSM.get_qr_code_state)
+            await message.answer(text=lexicon[lang]["commands"]["qr_code"])
 
-        # Если введена команда с одним аргументом end, то возвращаем рандомное число от 0 до end
-        case 2:
-            try:
-                await message.answer(text=str(get_random_number(0, int(args[1]))))
-            except TypeError:
-                await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
-
-        # Если введена команда с аргументами start и end, то возвращаем рандомное число от start до end
-        case 3:
-            try:
-                await message.answer(text=str(get_random_number(int(args[1]), int(args[2]))))
-            except TypeError:
-                await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
-
-        # Иначе выводим - инвалид
+        # иначе выводим инвалида
         case _:
-            await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
-"""
+
+@router.message(MessageData(), StateFilter(FSM.get_qr_code_state))
+async def process_get_qr_code(message: Message, lang: str, lexicon: dict, state: FSMContext):
+    args = message.text.split()
+
+    match len(args):
+        case 1:
+            url = args[0]
+            if not check_url(url):
+                return await message.answer(text=lexicon[lang]["errors"]["wrong_url"])
+
+            await state.clear()
+            await message.answer_photo(photo=get_qr_code(url))
+
+        case 3:
+            url: str = args[0]
+            if not check_url(url):
+                return await message.answer(text=lexicon[lang]["errors"]["wrong_url"])
+
+            try:
+                size: int = int(args[1])
+            except ValueError:
+                return await message.answer(text=lexicon[lang]["errors"]["wrong_size"])
+
+            file_format: str = args[2]
+            if not check_file_format(args[2]):
+                return await message.answer(text=lexicon[lang]["errors"]["wrong_file_format"])
+
+            await state.clear()
+            await message.answer_document(document=get_qr_code(url, size, file_format))
+
+        case _:
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
+
+
 """
 @router.message(Command(commands='qr_code'))
 async def process_qr_code_command(message: Message):
@@ -414,3 +430,9 @@ async def process_birthdays_command(message: Message):
         case _:
             await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
 """
+
+
+# Этот хендлер отвечает, если были проигнорированы другие хендлеры
+@router.message(MessageData(), StateFilter(default_state))
+async def process_other_command(message: Message, lang: str, lexicon: dict):
+    await message.answer(text=lexicon[lang]["commands"]["other"])

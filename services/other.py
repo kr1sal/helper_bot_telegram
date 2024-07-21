@@ -26,11 +26,11 @@ def get_weather(city: str, lang: str = "EN") -> tuple:
     return weather_report
 
 
-HTTP_CODES = [100, 101, 102, 103,
-              201, 202, 203, 204, 205, 206, 207, 208, 214, 226,
-              300, 301, 302, 303, 304, 305, 307, 308,
-              400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 420, 421, 422, 423, 425, 426, 428, 429, 431, 444, 450, 451, 497, 498, 499,
-              500, 501, 502, 503, 504, 506, 507, 508, 509, 510, 511, 521, 522, 523, 525, 530, 599]
+HTTP_CODES: tuple = (100, 101, 102, 103,
+                     201, 202, 203, 204, 205, 206, 207, 208, 214, 226,
+                     300, 301, 302, 303, 304, 305, 307, 308,
+                     400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 420, 421, 422, 423, 425, 426, 428, 429, 431, 444, 450, 451, 497, 498, 499,
+                     500, 501, 502, 503, 504, 506, 507, 508, 509, 510, 511, 521, 522, 523, 525, 530, 599)
 
 
 # Получить изображение кота, в котором зашифрован код HTTP по API
@@ -51,22 +51,34 @@ def get_random_number(start: int = 0, end: int = 100) -> int:
     return randint(start, end)
 
 
-# Получить qr-код по API (0 - неизвестная ошибка, 1 - не открыть ресурс по url, 2 - формат файла не поддерживается)
-def get_qr_code(url: str, size: int = None, file_format: str = "png", transparent: bool = False):
-    """
+# Проверить url
+def check_url(url: str) -> bool:
     try:
         urlopen(url)
     except Exception:
-        return 1
+        return False
 
-    file_format = file_format.lower()
-    if file_format not in ("png", "svg", ".png", ".svg"):
-        return 2
+    return True
 
-    transparent = "_transparent" if transparent else ""
+
+FILE_FORMATS: tuple = ("png", "svg", ".png", ".svg")
+
+
+# Проверить формат файла
+def check_file_format(file_format: str) -> bool:
+    if not file_format.lower() in FILE_FORMATS:
+        return False
+
+    return True
+
+
+# Получить qr-код по API (0 - неизвестная ошибка, 1 - не открыть ресурс по url, 2 - формат файла не поддерживается)
+def get_qr_code(url: str, size: int = None, file_format: str = "png") -> URLInputFile | None:
     size = f"_{size}" if size else ""
     file_format = '.' + file_format if file_format[0] != '.' else file_format
+    file_format = file_format.lower()
 
-    # print(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
-    """
-    return URLInputFile(f"https://qrtag.net/api/qr{transparent}{size}{file_format}?url={url}")
+    try:
+        return URLInputFile(f"https://qrtag.net/api/qr{size}{file_format}?url={url}")
+    except Exception:
+        return None

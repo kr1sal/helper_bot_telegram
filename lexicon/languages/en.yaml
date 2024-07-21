@@ -2,18 +2,19 @@ id: en
 name: English
 
 help:
-  main: "<b>This is help for all commands! To display specific commands, use /man. To cancel a command, type /cancel</b>"
+  main: "<b>This is help for all commands! To display specific commands, use /man. To cancel a command, enter /cancel.\n
+  [*arg] - optional argument.</b>"
   start: "<b>/start</b> - <i>Register in the database and display a welcome message.</i>"
   delete_all_data: "<b>/delete_all_data</b> - <i>Deletes all data from the database. Some functions may not be available!</i>"
   cancel: "<b>/cancel</b> - <i>Cancel the command.</i>"
   help: "<b>/help</b> - <i>Display a list of commands.</i>"
   man: '<b>/man {commands}</b> - <i>Output documentation separately for each command. Write commands without slash.</i>'
-  language: "<b>/language</b> - <i>Select communication language.</i>\n
-  <b>/language change</b> - <i>Change language from list!</i>"
+  language: "<b>/language</b> - <i>Select the language of communication. The next message is to select a language.</i>\n
+  <b>/language change</b> - <i>Change language from the list!</i>"
   weather: "<b>/weather [city]</b> - <i>Display the weather forecast for today in the city city.</i>"
   http_in_cat: "<b>/http_in_cat [*code]</b> - <i>Output a random picture with the http code or with the passed code.</i>"
-  random: "<b>/random [*end] or /random [*start] [*end]</b> - <i>Outputs a random number from 0 to 100 if no arguments are passed.\n
-  Outputs from 0 to end or from start to end.</i>"
+  random: "<b>/random [*end] or /random [*start] [*end]</b> - <i>Outputs a random number from 0 to 100 if no arguments are passed.\nOutputs from 0 to end or from start to end.</i>"
+  qr_code: "<b>/qr_code</b> - <i>Get a QR code for the link. The next message must indicate the url, *size, *format (png | svg).</i >"
 
 commands:
   start:
@@ -37,6 +38,7 @@ commands:
     wind_speed: "Wind speed: <b>{wind_speed}</b> m/s"
   birthdays:
     birthday: "№{id}{delimiter}В {name} ({years}) on {date} BD!"
+  qr_code: "Enter the url, *size, image *format (png | svg)!"
 
 errors:
   not_registered: "You are not registered in the database! Enter the /start command!"
@@ -45,3 +47,6 @@ errors:
   city_not_found: "Unable to determine the weather for <b>{city}</b>."
   http_not_found: "Cat not found for HTTP code {code}!"
   wrong_args: "Wrong number of arguments passed!"
+  wrong_url: "This link is not opening, very strange!"
+  wrong_size: "The given size cannot be processed!"
+  wrong_file_format: "Wrong file format! Only .png and .svg are accepted!"
