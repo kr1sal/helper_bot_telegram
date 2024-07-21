@@ -4,14 +4,14 @@ from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.state import default_state
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery, URLInputFile
+from aiogram.types import Message, CallbackQuery
 
 from middlewares import RegisterCheck
 from filters import MessageData, CallbackQueryData
 from fsm import FSM
 from keyboards import language_buttons, language_kb
 from services import Database
-from services import get_weather, get_http_in_cat
+from services import get_weather, get_http_in_cat, get_random_number
 
 
 # Инициализируем router и регистрируем middleware для незарегистрированных пользователей
@@ -87,7 +87,7 @@ async def process_language_command(message: Message, lang: str, lexicon: dict, s
 
         # Иначе выводим "неверный синтаксис"
         case _:
-            await message.answer(text=lexicon[lang]["errors"]["invalid"])
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
 """ Language """
@@ -152,7 +152,7 @@ async def process_weather_command(message: Message, lang: str, lexicon: dict, st
 
         # Иначе выводим
         case _:
-            await message.answer(text=lexicon[lang]["errors"]["invalid"])
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
 @router.message(MessageData(), StateFilter(FSM.get_city))
@@ -173,7 +173,7 @@ async def process_get_city(message: Message, lang: str, lexicon: dict, state: FS
 
 
 @router.message(Command(commands='http_in_cat'), MessageData(), StateFilter(default_state))
-async def process_weather_command(message: Message, lang: str, lexicon: dict):
+async def process_http_in_cat_command(message: Message, lang: str, lexicon: dict):
     args = message.text.split()
 
     match len(args):
@@ -196,10 +196,36 @@ async def process_weather_command(message: Message, lang: str, lexicon: dict):
 
         # Иначе выводим инвалид синтаксис
         case _:
-            await message.answer(text=lexicon[lang]["errors"]["invalid"])
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
 
 
-#@router.message(Command(commands='random'), MessageData(), StateFilter(default_state))
+@router.message(Command(commands='random'), MessageData(), StateFilter(default_state))
+async def process_random_command(message: Message, lang: str, lexicon: dict):
+    args = message.text.split()
+
+    match len(args):
+        # Если введена только команда, то возвращаем рандомное число от 0 до 100
+        case 1:
+            await message.answer(text=str(get_random_number()))
+
+        # Если введена команда с одним аргументом end, то возвращаем рандомное число от 0 до end
+        case 2:
+            try:
+                await message.answer(text=str(get_random_number(0, int(args[1]))))
+            except TypeError:
+                await message.answer(text=lexicon[lang]["errors"]["invalid"])
+
+        # Если введена команда с аргументами start и end, то возвращаем рандомное число от start до end
+        case 3:
+            try:
+                await message.answer(text=str(get_random_number(int(args[1]), int(args[2]))))
+            except TypeError:
+                await message.answer(text=lexicon[lang]["errors"]["invalid"])
+
+        # Иначе выводим - инвалид
+        case _:
+            await message.answer(text=lexicon[lang]["errors"]["wrong_args"])
+
 
 """
 @router.message(Command(commands='random'))

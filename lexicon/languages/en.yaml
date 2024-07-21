@@ -10,6 +10,10 @@ help:
   man: '<b>/man {commands}</b> - <i>Output documentation separately for each command. Write commands without slash.</i>'
   language: "<b>/language</b> - <i>Select communication language.</i>\n
   <b>/language change</b> - <i>Change language from list!</i>"
+  weather: "<b>/weather [city]</b> - <i>Display the weather forecast for today in the city city.</i>"
+  http_in_cat: "<b>/http_in_cat [*code]</b> - <i>Output a random picture with the http code or with the passed code.</i>"
+  random: "<b>/random [*end] or /random [*start] [*end]</b> - <i>Outputs a random number from 0 to 100 if no arguments are passed.\n
+  Outputs from 0 to end or from start to end.</i>"
 
 commands:
   start:
@@ -40,3 +44,4 @@ errors:
   not_found: "Command not found!"
   city_not_found: "Unable to determine the weather for <b>{city}</b>."
   http_not_found: "Cat not found for HTTP code {code}!"
+  wrong_args: "Wrong number of arguments passed!"

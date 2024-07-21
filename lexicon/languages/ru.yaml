@@ -10,6 +10,10 @@ help:
   man: '<b>/man {commands}</b> - <i>Вывести документацию отдельно для каждой команды. Пишите команды без слеша.</i>'
   language: "<b>/language</b> - <i>Выбрать язык коммуникации.</i>\n
   <b>/language change</b> - <i>Сменить язык из списка!</i>"
+  weather: "<b>/weather [city]</b> - <i>Вывести прогноз погоды на сегодня в городе city.</i>"
+  http_in_cat: "<b>/http_in_cat [*code]</b> - <i>Вывести случайную картинку с кодом http или с переданным code.</i>"
+  random: "<b>/random [*end] или /random [*start] [*end]</b> - <i>Выводит рандомное число от 0 до 100, если не переданы аргументы. \n
+  Выводит от 0 до end или от start до end.</i>"
 
 commands:
   start:
@@ -40,3 +44,4 @@ errors:
   not_found: "Команда не найдена!"
   city_not_found: "Невозможно определить погоду для <b>{city}</b>."
   http_not_found: "Для HTTP кода {code} кот не найден!"
+  wrong_args: "Неверное количество переданных аргументов!"
