@@ -39,3 +39,4 @@ errors:
   invalid: "Invalid command syntax!"
   not_found: "Command not found!"
   city_not_found: "Unable to determine the weather for <b>{city}</b>."
+  http_not_found: "Cat not found for HTTP code {code}!"

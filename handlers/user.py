@@ -4,14 +4,14 @@ from aiogram import F, Router
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.state import default_state
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, URLInputFile
 
 from middlewares import RegisterCheck
 from filters import MessageData, CallbackQueryData
 from fsm import FSM
 from keyboards import language_buttons, language_kb
 from services import Database
-from services import get_weather
+from services import get_weather, get_http_in_cat
 
 
 # Инициализируем router и регистрируем middleware для незарегистрированных пользователей
@@ -114,9 +114,7 @@ async def process_change_language(message: Message, lang: str, lexicon: dict, db
                 answer = lexicon[lang]["commands"]["language"]["change"].format(
                     language_old=lexicon[lang_old]["name"], language=lexicon[lang]["name"])
                 await state.clear()
-                await message.answer(text=answer)
-
-                return
+                return await message.answer(text=answer)
 
     # Иначе выводим сообщение о доступных языках
     else:
@@ -173,33 +171,37 @@ async def process_get_city(message: Message, lang: str, lexicon: dict, state: FS
     else:
         await message.answer(text=lexicon[lang]["errors"]["city_not_found"].format(city=message.text))
 
-"""
-@router.message(Command(commands='http_in_cat'))
-async def process_http_in_cat_command(message: Message):
-    lang = await db.get_language(message.from_user.id)
 
+@router.message(Command(commands='http_in_cat'), MessageData(), StateFilter(default_state))
+async def process_weather_command(message: Message, lang: str, lexicon: dict):
     args = message.text.split()
-    match len(args):
-        # При одном аргументе бот отвечает рандомной картинкой
-        case 1:
-            await message.answer_photo(photo=get_http_in_cat(get_random_http()))
 
-        # При двух определённый код, переданный вторым аргументом
+    match len(args):
+        # Если указана только команда, то переходим в состояние get_city
+        case 1:
+            await message.answer_photo(get_http_in_cat())
+
+        # если указан аргумент, считаем его кодом HTTP
         case 2:
             try:
-                if check_http(int(args[1])):
-                    await message.answer_photo(photo=get_http_in_cat(int(args[1])))
-                else:
-                    await message.answer(text=LEXICON[lang]["COMMANDS"]["http_404"])
-
+                code: int = int(args[1])
             except TypeError:
-                await message.answer(text=LEXICON[lang]["BASE"]["invalid"])
+                return await message.answer(text=lexicon[lang]["errors"]["invalid"])
 
-        # Иначе выводит - инвалид
+            photo = get_http_in_cat(code)
+            if not photo:
+                return await message.answer(text=lexicon[lang]["errors"]["http_not_found"].format(code=code))
+
+            await message.answer_photo(photo)
+
+        # Иначе выводим инвалид синтаксис
         case _:
-            await message.answer(text=LEXICON[lang]["BASE"]["wrong_args"])
+            await message.answer(text=lexicon[lang]["errors"]["invalid"])
 
 
+#@router.message(Command(commands='random'), MessageData(), StateFilter(default_state))
+
+"""
 @router.message(Command(commands='random'))
 async def process_random_command(message: Message):
     lang = await db.get_language(message.from_user.id)

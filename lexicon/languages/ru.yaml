@@ -39,3 +39,4 @@ errors:
   invalid: "Неверный синтаксис команды!"
   not_found: "Команда не найдена!"
   city_not_found: "Невозможно определить погоду для <b>{city}</b>."
+  http_not_found: "Для HTTP кода {code} кот не найден!"

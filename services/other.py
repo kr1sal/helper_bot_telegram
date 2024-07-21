@@ -7,13 +7,13 @@ from config import config
 
 
 # Прогноз погоды по API
-def get_weather(city: str, lang: str = "EN"):
+def get_weather(city: str, lang: str = "EN") -> tuple:
     # Получаем данные по openweathermap.org API
     weather_url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&lang={lang}&units=metric&appid={config.weather_api_key}"
     weather_response = requests.get(weather_url)
     weather_data = weather_response.json()
 
-    weather_report = None
+    weather_report = ()
     # Обрабатываем запрос
     if weather_response.status_code == 200:
         # Обработка полученной информации
@@ -33,19 +33,15 @@ HTTP_CODES = [100, 101, 102, 103,
               500, 501, 502, 503, 504, 506, 507, 508, 509, 510, 511, 521, 522, 523, 525, 530, 599]
 
 
-# Получить случайный http код
-def get_random_http() -> int:
-    return choice(HTTP_CODES)
-
-
-# Проверить код http на существование в HTTP_CODES
-def check_http(code: int) -> int:
-    return True if code in HTTP_CODES else None
-
-
 # Получить изображение кота, в котором зашифрован код HTTP по API
-def get_http_in_cat(code: int):
-    return URLInputFile(f"https://http.cat/{code}") if check_http(code) else None
+def get_http_in_cat(code: int = None) -> URLInputFile | None:
+    if not code:
+        code = choice(HTTP_CODES)
+
+    if code not in HTTP_CODES:
+        return None
+
+    return URLInputFile(f"https://http.cat/{code}")
 
 
 # Получить рандомное число
